@@ -1,2 +1,7 @@
-# blood-and-wizardry
-Jed Stevens - 2016 Summer Project
+# Blood and Wizardry
+
+Author: Jed Stevens
+
+----------------------
+
+Learning how to network in godot, trying to make a game out of it
