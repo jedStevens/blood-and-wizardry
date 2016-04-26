@@ -1,5 +1,5 @@
 
-extends Node2D
+extends Node
 
 # member variables here, example:
 # var a=2

@@ -6,6 +6,9 @@ extends CenterContainer
 
 var players = [0]
 
+var net_scene = null
+var level_scene = null
+
 func _ready():
 	# Called every time the node is added to the scene.
 	# Initialization here
@@ -16,7 +19,7 @@ func on_host_pressed():
 	Globals.set("host", true)
 	Globals.set("port", get_node("layout/controls/port").get_val())
 	Globals.set("ip", get_node("layout/controls/ip").get_text())
-	
+	net_scene = "res://game_content/game/host.scn"
 	run_game()
 
 func on_client_pressed():
@@ -24,10 +27,17 @@ func on_client_pressed():
 	Globals.set("host", false)
 	Globals.set("port", get_node("layout/controls/port").get_val())
 	Globals.set("ip", get_node("layout/controls/ip").get_text())
+	net_scene = "res://game_content/game/client.scn"
 	
 	run_game()
 
 func run_game():
 	Globals.set("players", players)
 	Globals.set("network_fps", 60)
-	get_tree().change_scene("res://game_content/game/stage1.scn")
+	get_tree().change_scene(net_scene)
+	
+	level_scene = load("res://game_content/game/stage1.scn").instance()
+	
+	get_tree().get_root().add_child(level_scene)
+	
+	print("Running game on:", Globals.get("ip"), " : ", Globals.get("port"))

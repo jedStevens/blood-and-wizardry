@@ -14,5 +14,7 @@ func _fixed_process(delta):
 	var ip = Globals.get("ip")
 	var port =  Globals.get("port")
 	var is_host = Globals.get("host")
-	var client_count = get_node("..").clients.size()
+	var client_count = 0
+	if is_host:
+		client_count = get_node("..").clients.size()
 	set_text("IP: " + str(ip) + " : " + str(port) + "\nHost: "+ str(is_host) + "\nClient Count:" + str(client_count))
