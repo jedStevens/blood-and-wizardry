@@ -12,4 +12,4 @@ func _ready():
 
 
 func _on_Play_Game_pressed():
-	get_tree().change_scene("res://menus/character_select.scn")
+	get_tree().change_scene("res://game_content/menus/character_select.scn")
