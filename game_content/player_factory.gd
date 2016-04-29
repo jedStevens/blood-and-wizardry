@@ -18,21 +18,28 @@ func get_character(p):
 func remove_player(id):
 	pass
 
-func spawn(character_id):
+func spawn(character_id, next_id):
+	
+	# NOTE ON THIS FUNCTION
+	# SHOULD ONLY BE TRUSTED TO RUN ON HOST
+	
 	var character = load(CHARACTER_MAP[character_id]).instance()
 	
 	# Add rules for spawning here
 	# Right now just use random pos on screen
 	
 	var pos = Vector2(0,0)
-	var id = Globals.get("next_player_id")
-	if id == null:
-		id = 0
-	Globals.set("next_player_id", id+1)
 	
 	character.set_pos(pos)
-	character.set_id(id)
+	print("Spawning with next_id as: ", next_id)
+	character.set_id(next_id)
 	
 	add_child(character)
 	
-	return [id, pos, Vector2(0,0)]
+	return [character_id, next_id, pos, Vector2(0,0)]
+
+func get_by_id(id):
+	for player in get_children():
+		if player.get_id() == id:
+			return player
+	return null

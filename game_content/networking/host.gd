@@ -1,5 +1,7 @@
 extends Node
 
+const PlayerFactory = preload("res://game_content/player_factory.gd")
+onready var playerFactory = PlayerFactory.new()
 
 # PACKET FORMATS
 # All the types of packets you may see and their format
@@ -44,6 +46,7 @@ var packet_peer = null
 
 var clients = []
 
+var next_id = 0
 
 func _ready():
 	packet_peer = PacketPeerUDP.new()
@@ -53,6 +56,15 @@ func _ready():
 	start_server()
 	
 	# GIVE PLAYERS A REFERENCE TO THE PACKET PEER FOR INPUT EVENTS
+	var player_id = 1
+	for player in Globals.get("players"):
+		var spawn = get_node("players").spawn(player, next_id)
+		var character = get_node("players").get_by_id(next_id)
+		if (character != null):
+			character.controllable = true
+			character.set_player_id(player_id)
+			player_id += 1
+		next_id += 1
 	
 	print("Host has started")
 
@@ -62,7 +74,7 @@ func start_server():
 	ip = Globals.get("ip")
 	print ("Starting server on: ", ip," : ", port)
 	if (packet_peer.listen(port) != OK):
-		print("Error listening on port ", port.get_value())
+		print("Error listening on port ", port)
 		return
 	else:
 		print("Listening on port: ", port)
@@ -112,19 +124,34 @@ func _process(delta):
 		var packet_ip = packet_peer.get_packet_ip()
 		var packet_port = packet_peer.get_packet_port()
 		
-		var spawns = []
-		
 		if (packet[0] == "connect"):
 			print("Connect Request")
+			var new_spawns = []
+			var new_ids = []
 			if (not has_client(packet_ip, packet_port)):
 				for i in range(packet[1].size()):
-					spawns.append(get_node("players").spawn(packet[1][i]))
+					new_spawns.append(playerFactory.spawn(packet[1][i], next_id))
 				print ("Client connected from ", packet_ip, ":", packet_port)
-				clients.append({ip = packet_ip, port = packet_port, seq = 0, players = packet[1]})
+				
+				for spawn in new_spawns:
+					new_ids.append(spawn[1])
+					
+					# Add the new chars to host
+				
+				clients.append({ip = packet_ip, port = packet_port, seq = 0, players = new_ids})
+				
+				broadcast(["client_connected", new_spawns])
 			
 			packet_peer.set_send_address(packet_ip, packet_port)
 			
-			packet_peer.put_var(["accepted", spawns])
+			var existing_characters = []
+			
+			for player in get_node("players").get_children():
+				existing_characters.append([player.get_character_id(), player.get_id(), player.get_pos(), player.get_velocity()])
+			
+			packet_peer.put_var(["accepted", existing_characters])
+				
+			packet_peer.put_var(["response", new_ids])
 		
 		elif (packet[0] == "disconnect"):
 			packet_peer.close()

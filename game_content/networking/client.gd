@@ -1,5 +1,8 @@
 extends Node
 
+const PlayerFactory = preload("res://game_content/player_factory.gd")
+onready var playerFactory = PlayerFactory.new()
+
 # PACKET FORMATS
 # All the types of packets you may see and their format
 # [0] is always a string of the type
@@ -41,6 +44,7 @@ var state = {}
 var port = null
 var ip = null
 var network_fps = 40 # MAGIC NUMBER
+var player_ids = []
 
 func _ready():
 	# Called every time the node is added to the scene.
@@ -78,11 +82,13 @@ func start_client():
 			print("Packet at 0: ", packet[0])
 			if (packet != null and packet[0] == "accepted"):
 				connected = true
-				
-				#for i in range(packet[1].size()):
-				#	var character = get_node("players").get_character(packet[1][i])
-				#	add_child(character)
-				
+				for spawn in packet[1]:
+					print ("Character")
+					var char = playerFactory.get_character(spawn[0])
+					char.set_id(spawn[1])
+					char.set_pos(spawn[2])
+					char.set_velocity(spawn[3])
+					get_node("players").add_child(char)
 				break
 	
 	if (not connected):
@@ -110,6 +116,10 @@ func _process(delta):
 			handle_update(packet)
 		elif (packet[0] == "event"):
 			handle_event(packet)
+		elif (packet[0] == "client_connected"):
+			handle_connection(packet)
+		elif (packet[0] == "response"):
+			handle_response(packet)
 
 
 func set_host_players(b):
@@ -118,5 +128,36 @@ func set_host_players(b):
 
 func handle_update(packet):
 	pass
+
 func handle_event(packet):
 	pass
+	
+func handle_response(packet):
+	var player_index = 1
+	for id in packet[1]:
+		print("Controlling:",id)
+		var character = get_player(id)
+		if (character != null):
+			get_player(id).controllable = true
+			get_player(id).set_player_id(player_index)
+			player_index += 1
+		
+func handle_connection(packet):
+	for spawn in packet[1]:
+		var player = get_player(spawn[1])
+		if (player == false):
+			var char = playerFactory.get_character(spawn[0])
+			char.set_id(spawn[1])
+			char.set_pos(spawn[2])
+			char.set_velocity(spawn[3])
+			get_node("players").add_child(char)
+		else:
+			player.set_pos(spawn[2])
+			player.set_velocity(spawn[3])
+		
+func get_player(id):
+	for player in get_node("players").get_children():
+		print(player.get_id(), " == ", id, " ?")
+		if player.get_id() == id:
+			return player
+	return null

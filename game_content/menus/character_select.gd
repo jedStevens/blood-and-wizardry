@@ -6,38 +6,29 @@ extends CenterContainer
 
 var players = [0]
 
-var net_scene = null
-var level_scene = null
-
 func _ready():
 	# Called every time the node is added to the scene.
 	# Initialization here
 	set_process_input(true)
-
-func on_host_pressed():
-	Globals.set("client", false)
-	Globals.set("host", true)
-	Globals.set("port", get_node("layout/controls/port").get_val())
-	Globals.set("ip", get_node("layout/controls/ip").get_text())
-	net_scene = "res://game_content/game/host.scn"
-	run_game()
-
-func on_client_pressed():
-	Globals.set("client", true)
-	Globals.set("host", false)
-	Globals.set("port", get_node("layout/controls/port").get_val())
-	Globals.set("ip", get_node("layout/controls/ip").get_text())
-	net_scene = "res://game_content/game/client.scn"
-	
-	run_game()
-
+	var icons = get_icons("res://game_content/characters")
+	for icon in icons:
+		var sprite = Sprite.new()
+		sprite.set_texture(load(icon))
+		get_node("layout/icons").add_child(sprite)
+	print("Icons: ", icons)
 func run_game():
-	Globals.set("players", players)
-	Globals.set("network_fps", 60)
-	get_tree().change_scene(net_scene)
-	
-	level_scene = load("res://game_content/game/stage1.scn").instance()
-	
-	get_tree().get_root().add_child(level_scene)
-	
-	print("Running game on:", Globals.get("ip"), " : ", Globals.get("port"))
+	pass
+
+func get_icons(path):
+	var icons = []
+	var d = Directory.new()
+	if d.open( path )==0:
+		d.list_dir_begin()
+		var file_name = d.get_next()
+		while(file_name!=""):
+			if d.current_is_dir() and file_name != "." and file_name != ".." :
+				icons.append(path + "/" + file_name + "/icon.png")
+			file_name = d.get_next()
+	else:
+		print("Some open Error, maybe directory not found?")
+	return icons
