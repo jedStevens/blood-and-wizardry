@@ -22,6 +22,7 @@ export var wall_jump_vector = Vector2(100,-1)
 
 var n
 var can_jump = false
+var jump_attempt = false
 
 func _ready():
 	set_process(true)
