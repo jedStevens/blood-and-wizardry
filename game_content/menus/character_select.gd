@@ -16,6 +16,7 @@ func _ready():
 		sprite.set_texture(load(icon))
 		get_node("layout/icons").add_child(sprite)
 	print("Icons: ", icons)
+	print("Children: ", get_node("layout/icons").get_child_count())
 func run_game():
 	pass
 
