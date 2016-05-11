@@ -18,11 +18,16 @@ export var jump_height = 250 # in units
 export var wall_jump_speed = 350
 
 export var player_index = 1
+func device_id():
+	return player_index - 1
 
 export var jump_dot_threshold = 0.8
 export var wall_jump_dot_threshold = 0.8
 
-export var wall_jump_vector = Vector2(100,-1)
+export var wall_jump_vector = Vector2(1,-1)
+
+export var max_health = 300
+var health
 
 var n
 var can_jump = false
@@ -37,6 +42,9 @@ var ability_offset = 3
 var disable_timer = null
 var disabled = false
 
+var freeze_distance = null
+var frozen = false
+
 func _ready():
 	set_process(true)
 	set_process_input(true)
@@ -46,16 +54,17 @@ func _ready():
 	
 	disable_timer = get_node("disable-timer")
 	disable_timer.connect("timeout",self, "_enable")
+	
+	health = max_health
+	get_node("health-bar").set_max(max_health)
 
 func _input(event):
 	if (event.type == InputEvent.KEY or event.type == InputEvent.JOYSTICK_BUTTON)  and !event.is_echo() and event.is_pressed():
 		
-		if (can_jump and Input.is_action_pressed("player_"+str(player_index)+"_jump") and n.normalized().dot(Vector2(0,-1)) > jump_dot_threshold):
-			can_jump = false
+		if (Input.is_action_pressed("player_"+str(player_index)+"_jump")):
 			jump(n)
 			
-		elif (can_jump and Input.is_action_pressed("player_"+str(player_index)+"_jump") and (n.normalized().dot(Vector2(1,0)) > wall_jump_dot_threshold or n.normalized().dot(Vector2(-1,0)) > wall_jump_dot_threshold)):
-			can_jump = false
+		elif (Input.is_action_pressed("player_"+str(player_index)+"_jump")):
 			wall_jump(n)
 		
 		if (Input.is_action_pressed("player_"+str(player_index)+"_mode_switch")):
@@ -68,7 +77,7 @@ func _input(event):
 		
 
 func _process(delta):
-	if not disabled:
+	if not disabled and not frozen:
 		velocity.x *= decay
 		var falling = false
 		
@@ -102,19 +111,51 @@ func _process(delta):
 			velocity = n.slide(velocity)
 			move(motion)
 		
-		var dir = get_scale()
+		var dir = get_node("sprite").get_scale()
 		if sign(velocity.x) > 0:
 			dir.x = 1
 		elif sign(velocity.x) < 0:
 			dir.x = -1
-		set_scale(dir)
+		get_node("sprite").set_scale(dir)
+	
+	if frozen and not disabled:
+		move(velocity * delta)
+		freeze_distance -= get_travel().length()
+		if freeze_distance != null:
+			if freeze_distance < 0:
+				unfreeze()
+		if is_colliding():
+			unfreeze()
+	
+	get_node("health-bar").set_value(health)
+	
+	derived_ai(delta)
 
 func jump(normal):
-	velocity.y = -jump_height
+	if (on_floor() and can_jump):
+		can_jump = false
+		velocity.y = -jump_height
 
 func wall_jump(normal):
-	velocity.x = sign(normal.x) * wall_jump_vector.x * wall_jump_speed
-	velocity.y = wall_jump_vector.y * wall_jump_speed
+	if (on_wall() and can_jump):
+		can_jump = false
+		velocity.x = sign(normal.x) * wall_jump_vector.x * wall_jump_speed
+		velocity.y = wall_jump_vector.y * wall_jump_speed
+
+func on_floor():
+	var space_state = get_world_2d().get_direct_space_state()
+	var ray = Vector2(0,get_node("hit-box").get_shape().get_height()+get_node("hit-box").get_shape().get_radius())
+	var result = space_state.intersect_ray(get_pos(), get_pos()+ray, [get_node("hit-box")])
+	if !result.empty():
+		return true
+	return false
+
+func on_wall():
+	if n == null:
+		return false
+	if n.normalized().dot(Vector2(1,0)) > wall_jump_dot_threshold or n.normalized().dot(Vector2(-1,0)) > wall_jump_dot_threshold:
+		return true
+	return false
 
 func disable(duration):
 	if not disabled:
@@ -128,3 +169,14 @@ func disable(duration):
 func _enable():
 	print("enabling")
 	disabled = false
+
+func freeze(direction, distance=null):
+	velocity = direction
+	freeze_distance = distance
+	frozen = true
+
+func unfreeze():
+	frozen = false
+
+func derived_ai(delta):
+	pass

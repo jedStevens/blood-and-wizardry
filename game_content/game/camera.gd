@@ -15,5 +15,4 @@ func _fixed_process(delta):
 		avg += player.get_pos()
 		i += 1
 	avg = avg / i
-	
 	set_pos(avg)

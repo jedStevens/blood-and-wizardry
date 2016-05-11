@@ -8,14 +8,11 @@ extends CenterContainer
 func _ready():
 	# Called every time the node is added to the scene.
 	# Initialization here
-	pass
+	set_process(true)
 
-
-func _on_Play_Game_pressed():
-	#get_tree().change_scene("res://game_content/menus/character_select.scn")
-	pass
-	#Search for a game using a server maybe?
-
+func _process(delta):
+	if (Input.is_action_pressed("ui_accept")):
+		coop_start()
 
 func coop_start():
-	get_tree().change_scene("res://game_content/menus/character_select.scn")
+	get_tree().change_scene("res://game_content/menus/character_select_local.scn")

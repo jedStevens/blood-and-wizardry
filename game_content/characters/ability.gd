@@ -8,7 +8,7 @@ func run(message=null):
 	print("Used Ability: ", message)
 	cast()
 
-func cast():
+func cast(target=null):
 	pass # Wait out cast duration, play cast animation
 
 func apply(target=null):
